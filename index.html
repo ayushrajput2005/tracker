@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assignment Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- auth -->
+       
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-box">
+      <h1>Assignment Tracker</h1>
+      <p class="subtitle">Sign in to your account</p>
+
+      <!-- Toggle between Login and Signup -->
+      <div class="auth-tabs">
+        <button id="tabLogin"  class="auth-tab active">Login</button>
+        <button id="tabSignup" class="auth-tab">Sign Up</button>
+      </div>
+
+      <p id="authError" class="auth-error"></p>
+
+      <div class="form-group">
+        <label for="authUsername">Username</label>
+        <input type="text" id="authUsername" placeholder="your username" autocomplete="username" />
+      </div>
+
+      <div class="form-group">
+        <label for="authPassword">Password</label>
+        <input type="password" id="authPassword" placeholder="your password" autocomplete="current-password" />
+      </div>
+
+      <button id="authSubmitBtn">Login</button>
+    </div>
+  </div>
+
+
+  <!-- main app -->
+  <div id="appScreen" class="app-screen" style="display:none;">
+
+    <div class="container">
+
+      <div class="app-header">
+        <div>
+          <h1>Assignment Tracker</h1>
+          <p class="subtitle" id="welcomeMsg">Welcome back!</p>
+        </div>
+        <button id="logoutBtn" class="btn-logout">Logout</button>
+      </div>
+
+      <!-- Form to add a new assignment -->
+      <div class="form-box">
+        <h2>Add Assignment</h2>
+
+        <div class="form-group">
+          <label for="title">Assignment Title</label>
+          <input type="text" id="title" placeholder="e.g. Lab Report Unit 3" />
+        </div>
+
+        <div class="form-group">
+          <label for="subject">Subject</label>
+          <input type="text" id="subject" placeholder="e.g. Physics" />
+        </div>
+
+        <div class="form-group">
+          <label for="dueDate">Due Date</label>
+          <input type="date" id="dueDate" />
+        </div>
+
+        <button id="addBtn">Add Assignment</button>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <span>Show:</span>
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="done">Completed</button>
+      </div>
+
+      <!-- Assignment list — cards injected by script.js -->
+      <div id="assignmentList"></div>
+      <p id="emptyMsg" class="empty-msg">No assignments yet. Add one above.</p>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
