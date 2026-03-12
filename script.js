@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "https://tracker-0l8g.onrender.com";
 
 // --- Session helpers ---
 function getToken()    { return localStorage.getItem("session_token"); }
