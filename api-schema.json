@@ -1,155 +1,296 @@
 {
   "info": {
     "title": "Assignment Tracker API",
-    "version": "1.0.0",
-    "description": "Session-based auth + per-user assignment CRUD. All assignment routes require the X-Session-Token header.",
-    "base_url": "http://localhost:8000"
+    "version": "2.0.0",
+    "description": "Session-based auth + per-user assignment CRUD + shared Boards with optional file attachments. All protected routes require the X-Session-Token header.",
+    "base_url": "https://tracker-0l8g.onrender.com"
   },
   "auth": {
     "type": "custom-header",
     "header": "X-Session-Token",
     "description": "Obtain a token via /signup or /login. Include it in every protected request."
   },
+  "notes": {
+    "file_uploads": "POST /assignments and POST /boards/{board_id}/assignments accept multipart/form-data with an optional 'document' file field. All other endpoints use application/json.",
+    "static_files": "Uploaded files are served at GET /uploads/{stored_filename}. The stored filename is returned in the doc_path field.",
+    "board_ownership": "Only the board owner may add or delete assignments on a board (403 otherwise). Any authenticated user may search a board by board_id and copy items to their own schedule."
+  },
   "endpoints": [
     {
-      "method": "POST",
-      "path": "/signup",
-      "summary": "Create a new account and receive a session token.",
-      "auth_required": false,
-      "request_body": {
-        "content_type": "application/json",
-        "schema": {
-          "username": { "type": "string", "required": true },
-          "password": { "type": "string", "required": true }
-        }
-      },
-      "responses": {
-        "201": {
-          "description": "Account created. Returns a session token.",
-          "schema": {
-            "token": { "type": "string", "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479" },
-            "username": { "type": "string", "example": "alice" }
-          }
-        },
-        "400": { "description": "Username already taken." }
-      }
-    },
-    {
-      "method": "POST",
-      "path": "/login",
-      "summary": "Log in with existing credentials.",
-      "auth_required": false,
-      "request_body": {
-        "content_type": "application/json",
-        "schema": {
-          "username": { "type": "string", "required": true },
-          "password": { "type": "string", "required": true }
-        }
-      },
-      "responses": {
-        "200": {
-          "description": "Login successful. Returns a session token.",
-          "schema": {
-            "token": { "type": "string" },
-            "username": { "type": "string" }
-          }
-        },
-        "401": { "description": "Invalid username or password." }
-      }
-    },
-    {
-      "method": "POST",
-      "path": "/logout",
-      "summary": "Invalidate the current session token.",
-      "auth_required": true,
-      "responses": {
-        "204": { "description": "Logged out successfully." },
-        "401": { "description": "Missing or invalid token." }
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/assignments",
-      "summary": "List all assignments for the logged-in user.",
-      "auth_required": true,
-      "responses": {
-        "200": {
-          "description": "Array of assignment objects.",
-          "schema": {
-            "type": "array",
-            "items": {
-              "id": { "type": "integer" },
-              "title": { "type": "string" },
-              "subject": { "type": "string" },
-              "due_date": { "type": "string", "format": "YYYY-MM-DD" },
-              "done": { "type": "boolean" }
+      "group": "Auth",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/signup",
+          "summary": "Create a new account and receive a session token.",
+          "auth_required": false,
+          "request_body": {
+            "content_type": "application/json",
+            "schema": {
+              "username": { "type": "string", "required": true },
+              "password": { "type": "string", "required": true }
             }
+          },
+          "responses": {
+            "201": {
+              "description": "Account created.",
+              "schema": {
+                "token":    { "type": "string", "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479" },
+                "username": { "type": "string", "example": "alice" }
+              }
+            },
+            "400": { "description": "Username already taken." }
           }
         },
-        "401": { "description": "Missing or invalid token." }
-      }
-    },
-    {
-      "method": "POST",
-      "path": "/assignments",
-      "summary": "Create a new assignment for the logged-in user.",
-      "auth_required": true,
-      "request_body": {
-        "content_type": "application/json",
-        "schema": {
-          "title": { "type": "string", "required": true },
-          "subject": { "type": "string", "required": true },
-          "due_date": { "type": "string", "format": "YYYY-MM-DD", "required": true }
-        }
-      },
-      "responses": {
-        "201": {
-          "description": "Assignment created.",
-          "schema": {
-            "id": { "type": "integer" },
-            "title": { "type": "string" },
-            "subject": { "type": "string" },
-            "due_date": { "type": "string" },
-            "done": { "type": "boolean", "example": false }
+        {
+          "method": "POST",
+          "path": "/login",
+          "summary": "Log in with existing credentials.",
+          "auth_required": false,
+          "request_body": {
+            "content_type": "application/json",
+            "schema": {
+              "username": { "type": "string", "required": true },
+              "password": { "type": "string", "required": true }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Login successful.",
+              "schema": {
+                "token":    { "type": "string" },
+                "username": { "type": "string" }
+              }
+            },
+            "401": { "description": "Invalid username or password." }
           }
         },
-        "401": { "description": "Missing or invalid token." },
-        "422": { "description": "Validation error — missing or malformed fields." }
-      }
-    },
-    {
-      "method": "PATCH",
-      "path": "/assignments/{id}",
-      "summary": "Mark an assignment as done or undo it.",
-      "auth_required": true,
-      "path_params": {
-        "id": { "type": "integer", "description": "Assignment ID" }
-      },
-      "request_body": {
-        "content_type": "application/json",
-        "schema": {
-          "done": { "type": "boolean", "required": true }
+        {
+          "method": "POST",
+          "path": "/logout",
+          "summary": "Invalidate the current session token.",
+          "auth_required": true,
+          "responses": {
+            "204": { "description": "Logged out successfully." },
+            "401": { "description": "Missing or invalid token." }
+          }
         }
-      },
-      "responses": {
-        "200": { "description": "Updated assignment object." },
-        "401": { "description": "Missing or invalid token." },
-        "404": { "description": "Assignment not found or does not belong to this user." }
-      }
+      ]
     },
     {
-      "method": "DELETE",
-      "path": "/assignments/{id}",
-      "summary": "Delete an assignment.",
-      "auth_required": true,
-      "path_params": {
-        "id": { "type": "integer", "description": "Assignment ID" }
-      },
-      "responses": {
-        "204": { "description": "Deleted successfully." },
-        "401": { "description": "Missing or invalid token." },
-        "404": { "description": "Assignment not found or does not belong to this user." }
-      }
+      "group": "Personal Assignments",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/assignments",
+          "summary": "List all assignments for the logged-in user.",
+          "auth_required": true,
+          "responses": {
+            "200": {
+              "description": "Array of assignment objects.",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "id":       { "type": "integer" },
+                  "title":    { "type": "string" },
+                  "subject":  { "type": "string" },
+                  "due_date": { "type": "string", "format": "YYYY-MM-DD" },
+                  "done":     { "type": "boolean" },
+                  "doc_name": { "type": "string", "nullable": true, "description": "Original filename of attachment, if any." },
+                  "doc_path": { "type": "string", "nullable": true, "description": "Stored filename. Retrieve via GET /uploads/{doc_path}." }
+                }
+              }
+            },
+            "401": { "description": "Missing or invalid token." }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/assignments",
+          "summary": "Create a new assignment for the logged-in user. Accepts an optional file attachment.",
+          "auth_required": true,
+          "request_body": {
+            "content_type": "multipart/form-data",
+            "schema": {
+              "title":    { "type": "string",  "required": true },
+              "subject":  { "type": "string",  "required": true },
+              "due_date": { "type": "string",  "format": "YYYY-MM-DD", "required": true },
+              "document": { "type": "file",    "required": false, "description": "Optional file attachment." }
+            }
+          },
+          "responses": {
+            "201": { "description": "Assignment created. Returns full assignment object including doc_name and doc_path." },
+            "401": { "description": "Missing or invalid token." },
+            "422": { "description": "Validation error — missing or malformed fields." }
+          }
+        },
+        {
+          "method": "PATCH",
+          "path": "/assignments/{id}",
+          "summary": "Mark an assignment as done or undo it.",
+          "auth_required": true,
+          "path_params": {
+            "id": { "type": "integer", "description": "Assignment ID" }
+          },
+          "request_body": {
+            "content_type": "application/json",
+            "schema": {
+              "done": { "type": "boolean", "required": true }
+            }
+          },
+          "responses": {
+            "200": { "description": "Updated assignment object." },
+            "401": { "description": "Missing or invalid token." },
+            "404": { "description": "Assignment not found or does not belong to this user." }
+          }
+        },
+        {
+          "method": "DELETE",
+          "path": "/assignments/{id}",
+          "summary": "Delete an assignment and its stored file (if any).",
+          "auth_required": true,
+          "path_params": {
+            "id": { "type": "integer", "description": "Assignment ID" }
+          },
+          "responses": {
+            "204": { "description": "Deleted successfully." },
+            "401": { "description": "Missing or invalid token." },
+            "404": { "description": "Assignment not found or does not belong to this user." }
+          }
+        }
+      ]
+    },
+    {
+      "group": "Boards",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/boards",
+          "summary": "List all boards owned by the logged-in user.",
+          "auth_required": true,
+          "responses": {
+            "200": {
+              "description": "Array of board objects.",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "id":             { "type": "integer" },
+                  "board_id":       { "type": "string", "description": "Public UUID used for sharing." },
+                  "name":           { "type": "string" },
+                  "owner_username": { "type": "string" },
+                  "assignments":    { "type": "array", "description": "Array of BoardAssignment objects." }
+                }
+              }
+            },
+            "401": { "description": "Missing or invalid token." }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/boards",
+          "summary": "Create a new board. A unique board_id (UUID) is auto-generated.",
+          "auth_required": true,
+          "request_body": {
+            "content_type": "application/json",
+            "schema": {
+              "name": { "type": "string", "required": true }
+            }
+          },
+          "responses": {
+            "201": { "description": "Board created. Returns full board object with the generated board_id." },
+            "401": { "description": "Missing or invalid token." }
+          }
+        },
+        {
+          "method": "GET",
+          "path": "/boards/{board_id}",
+          "summary": "Fetch a board and all its assignments by the public board_id UUID. Any authenticated user can access this.",
+          "auth_required": true,
+          "path_params": {
+            "board_id": { "type": "string", "description": "Public UUID of the board." }
+          },
+          "responses": {
+            "200": { "description": "Board object with assignments." },
+            "401": { "description": "Missing or invalid token." },
+            "404": { "description": "Board not found." }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/boards/{board_id}/assignments",
+          "summary": "Add an assignment to a board. Owner only. Accepts an optional file attachment.",
+          "auth_required": true,
+          "owner_only": true,
+          "path_params": {
+            "board_id": { "type": "string", "description": "Public UUID of the board." }
+          },
+          "request_body": {
+            "content_type": "multipart/form-data",
+            "schema": {
+              "title":    { "type": "string", "required": true },
+              "subject":  { "type": "string", "required": true },
+              "due_date": { "type": "string", "format": "YYYY-MM-DD", "required": true },
+              "document": { "type": "file",   "required": false }
+            }
+          },
+          "responses": {
+            "201": { "description": "Board assignment created." },
+            "401": { "description": "Missing or invalid token." },
+            "403": { "description": "You are not the board owner." },
+            "404": { "description": "Board not found." }
+          }
+        },
+        {
+          "method": "DELETE",
+          "path": "/boards/{board_id}/assignments/{assignment_id}",
+          "summary": "Delete an assignment from a board and its stored file. Owner only.",
+          "auth_required": true,
+          "owner_only": true,
+          "path_params": {
+            "board_id":     { "type": "string",  "description": "Public UUID of the board." },
+            "assignment_id": { "type": "integer", "description": "Board assignment ID." }
+          },
+          "responses": {
+            "204": { "description": "Deleted successfully." },
+            "401": { "description": "Missing or invalid token." },
+            "403": { "description": "You are not the board owner." },
+            "404": { "description": "Board or assignment not found." }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/boards/{board_id}/assignments/{assignment_id}/add-to-schedule",
+          "summary": "Copy a board assignment into the current user's personal assignment list. Available to any authenticated user.",
+          "auth_required": true,
+          "path_params": {
+            "board_id":      { "type": "string",  "description": "Public UUID of the board." },
+            "assignment_id": { "type": "integer", "description": "Board assignment ID." }
+          },
+          "responses": {
+            "201": { "description": "Personal assignment created. Returns the new assignment object (includes doc reference if the board item had one)." },
+            "401": { "description": "Missing or invalid token." },
+            "404": { "description": "Board or assignment not found." }
+          }
+        }
+      ]
+    },
+    {
+      "group": "Static Files",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/uploads/{filename}",
+          "summary": "Retrieve an uploaded file by its stored filename (the value of doc_path).",
+          "auth_required": false,
+          "path_params": {
+            "filename": { "type": "string", "description": "The stored filename returned in doc_path." }
+          },
+          "responses": {
+            "200": { "description": "File contents with appropriate Content-Type." },
+            "404": { "description": "File not found." }
+          }
+        }
+      ]
     }
   ]
 }

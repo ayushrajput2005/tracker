@@ -4,88 +4,163 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Assignment Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- auth -->
-       
+  <!-- ── Auth ── -->
   <div id="authScreen" class="auth-screen">
     <div class="auth-box">
       <h1>Assignment Tracker</h1>
       <p class="subtitle">Sign in to your account</p>
-
-      <!-- Toggle between Login and Signup -->
       <div class="auth-tabs">
         <button id="tabLogin"  class="auth-tab active">Login</button>
         <button id="tabSignup" class="auth-tab">Sign Up</button>
       </div>
-
       <p id="authError" class="auth-error"></p>
-
       <div class="form-group">
         <label for="authUsername">Username</label>
         <input type="text" id="authUsername" placeholder="your username" autocomplete="username" />
       </div>
-
       <div class="form-group">
         <label for="authPassword">Password</label>
         <input type="password" id="authPassword" placeholder="your password" autocomplete="current-password" />
       </div>
-
       <button id="authSubmitBtn">Login</button>
     </div>
   </div>
 
-
-  <!-- main app -->
+  <!-- ── App ── -->
   <div id="appScreen" class="app-screen" style="display:none;">
-
     <div class="container">
 
+      <!-- Header -->
       <div class="app-header">
         <div>
           <h1>Assignment Tracker</h1>
-          <p class="subtitle" id="welcomeMsg">Welcome back!</p>
+          <p class="subtitle" id="welcomeMsg"></p>
         </div>
-        <button id="logoutBtn" class="btn-logout">Logout</button>
+        <button id="logoutBtn" class="btn-ghost">Logout</button>
       </div>
 
-      <!-- Form to add a new assignment -->
-      <div class="form-box">
-        <h2>Add Assignment</h2>
-
-        <div class="form-group">
-          <label for="title">Assignment Title</label>
-          <input type="text" id="title" placeholder="e.g. Lab Report Unit 3" />
-        </div>
-
-        <div class="form-group">
-          <label for="subject">Subject</label>
-          <input type="text" id="subject" placeholder="e.g. Physics" />
-        </div>
-
-        <div class="form-group">
-          <label for="dueDate">Due Date</label>
-          <input type="date" id="dueDate" />
-        </div>
-
-        <button id="addBtn">Add Assignment</button>
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="assignments">My Assignments</button>
+        <button class="tab-btn" data-tab="boards">Boards</button>
       </div>
 
-      <!-- Filter bar -->
-      <div class="filter-bar">
-        <span>Show:</span>
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="pending">Pending</button>
-        <button class="filter-btn" data-filter="done">Completed</button>
+      <!-- ═══════════════ MY ASSIGNMENTS ═══════════════ -->
+      <div id="panelAssignments" class="panel">
+
+        <div class="form-box">
+          <h2>Add Assignment</h2>
+          <div class="row-inputs">
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="title" placeholder="e.g. Lab Report Unit 3" />
+            </div>
+            <div class="form-group">
+              <label>Subject</label>
+              <input type="text" id="subject" placeholder="e.g. Physics" />
+            </div>
+            <div class="form-group short">
+              <label>Due Date</label>
+              <input type="date" id="dueDate" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Attach Document <span class="opt">(optional)</span></label>
+            <input type="file" id="assignDoc" />
+          </div>
+          <button id="addBtn">Add Assignment</button>
+        </div>
+
+        <div class="filter-bar">
+          <span>Show:</span>
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="pending">Pending</button>
+          <button class="filter-btn" data-filter="done">Done</button>
+        </div>
+
+        <div id="assignmentList"></div>
+        <p id="emptyMsg" class="empty-msg">No assignments yet.</p>
       </div>
 
-      <!-- Assignment list — cards injected by script.js -->
-      <div id="assignmentList"></div>
-      <p id="emptyMsg" class="empty-msg">No assignments yet. Add one above.</p>
+      <!-- ═══════════════ BOARDS ═══════════════ -->
+      <div id="panelBoards" class="panel" style="display:none;">
 
-    </div>
+        <!-- Board list view -->
+        <div id="boardsListView">
+
+          <div class="boards-toolbar">
+            <!-- Create -->
+            <div class="inline-form">
+              <input type="text" id="boardName" placeholder="New board name…" />
+              <button id="createBoardBtn">Create</button>
+            </div>
+            <!-- Search -->
+            <div class="inline-form">
+              <input type="text" id="searchBoardId" placeholder="Paste Board ID to search…" />
+              <button id="searchBoardBtn">Search</button>
+            </div>
+          </div>
+          <p id="searchError" class="auth-error"></p>
+
+          <!-- New board ID reveal -->
+          <div id="newBoardIdBox" class="id-reveal" style="display:none;">
+            Board ID: <span id="newBoardIdText" class="id-value"></span>
+            <button id="copyBoardIdBtn" class="btn-ghost">Copy</button>
+          </div>
+
+          <h3 class="section-heading">My Boards</h3>
+          <div id="myBoardsCards"></div>
+          <p id="myBoardsEmpty" class="empty-msg" style="display:none;">No boards yet.</p>
+        </div>
+
+        <!-- Board detail view (drill-down) -->
+        <div id="boardDetailView" style="display:none;">
+
+          <div class="detail-bar">
+            <div>
+              <span class="detail-name" id="boardDetailName"></span>
+              <span class="detail-owner" id="boardDetailOwner"></span>
+            </div>
+            <button id="closeBoardDetail" class="btn-ghost">← Back</button>
+          </div>
+
+          <!-- Owner-only: add assignment to board -->
+          <div id="boardAddAssignmentForm" class="form-box" style="display:none;">
+            <h2>Add to Board</h2>
+            <div class="row-inputs">
+              <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="boardAssTitle" placeholder="e.g. Essay Draft" />
+              </div>
+              <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="boardAssSubject" placeholder="e.g. English" />
+              </div>
+              <div class="form-group short">
+                <label>Due Date</label>
+                <input type="date" id="boardAssDate" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Attach Document <span class="opt">(optional)</span></label>
+              <input type="file" id="boardAssDoc" />
+            </div>
+            <button id="boardAddAssBtn">Add to Board</button>
+          </div>
+
+          <div id="boardAssignmentList"></div>
+          <p id="boardEmptyMsg" class="empty-msg">No assignments on this board yet.</p>
+        </div>
+
+      </div><!-- /panelBoards -->
+
+    </div><!-- /container -->
   </div>
 
   <script src="script.js"></script>
