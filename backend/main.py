@@ -12,9 +12,29 @@ import models
 import schemas
 from database import engine, get_db
 
-# Auto-create new columns on existing DB by running create_all (adds new tables; for columns
-# on existing tables in dev sqlite we drop and recreate if needed)
 models.Base.metadata.create_all(bind=engine)
+
+def _migrate():
+    """Safely add new columns to existing SQLite DB (idempotent)."""
+    import sqlite3
+    db_path = os.path.join(os.path.dirname(__file__), "assignments.db")
+    if not os.path.exists(db_path):
+        return
+    conn = sqlite3.connect(db_path)
+    cur  = conn.cursor()
+    for table, col in [
+        ("assignments",       "doc_name"),
+        ("assignments",       "doc_path"),
+        ("board_assignments", "doc_name"),
+        ("board_assignments", "doc_path"),
+    ]:
+        existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})").fetchall()]
+        if col not in existing:
+            cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} TEXT")
+    conn.commit()
+    conn.close()
+
+_migrate()
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)

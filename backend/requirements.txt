@@ -2,3 +2,5 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 bcrypt
+python-multipart
+aiofiles
